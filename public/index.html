@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision - Módulo Conta Gráfica</title>
+<style>
+/* ============================================================
+   PALETA SAYGO: Laranja #E8571A | Cinza escuro #2C2C2C | 
+   Fundo #F5F5F5 | Branco | Cinza sidebar #1E1E2D
+   ============================================================ */
+:root {
+  --orange:      #E8571A;
+  --orange-h:    #C94A10;
+  --orange-light:#FDF0EB;
+  --sidebar:     #1E1E2D;
+  --sidebar-h:   #2A2A3D;
+  --topbar:      #FFFFFF;
+  --bg:          #F5F6FA;
+  --white:       #FFFFFF;
+  --border:      #E8E8F0;
+  --text-dark:   #2C2C3A;
+  --text-mid:    #6B7280;
+  --text-light:  #9CA3AF;
+  --success:     #10B981;
+  --success-bg:  #D1FAE5;
+  --danger:      #EF4444;
+  --danger-bg:   #FEE2E2;
+  --alert:       #F59E0B;
+  --alert-bg:    #FEF3C7;
+  --info:        #3B82F6;
+  --info-bg:     #DBEAFE;
+  --shadow:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:   0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text-dark); height:100vh; display:flex; overflow:hidden; }
+
+/* ── SIDEBAR ─────────────────────────────────────── */
+#sidebar {
+  width:240px; background:var(--sidebar); display:flex;
+  flex-direction:column; flex-shrink:0; height:100vh; overflow-y:auto;
+}
+.logo-wrap { padding:22px 20px 18px; border-bottom:1px solid rgba(255,255,255,.06); }
+.logo-img  { display:flex; align-items:center; gap:10px; }
+.logo-icon { width:32px; height:32px; background:var(--orange); border-radius:7px;
+             display:flex; align-items:center; justify-content:center;
+             font-size:18px; font-weight:900; color:#fff; letter-spacing:-1px; }
+.logo-name { font-size:17px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:10px; color:rgba(255,255,255,.4); margin-top:6px; padding-left:42px; }
+
+.nav-section { font-size:10px; font-weight:700; color:rgba(255,255,255,.3);
+               padding:18px 20px 6px; letter-spacing:1.5px; text-transform:uppercase; }
+
+.nav-btn {
+  display:flex; align-items:center; gap:11px; padding:11px 20px;
+  color:rgba(255,255,255,.55); font-size:13px; font-weight:500;
+  cursor:pointer; border:none; background:none; width:100%; text-align:left;
+  transition:.15s; border-radius:0; position:relative;
+}
+.nav-btn:hover { background:var(--sidebar-h); color:rgba(255,255,255,.85); }
+.nav-btn.active { background:rgba(232,87,26,.15); color:#fff; font-weight:700; }
+.nav-btn.active::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:3px; background:var(--orange); border-radius:0 2px 2px 0;
+}
+.nav-icon { font-size:16px; width:20px; text-align:center; opacity:.8; }
+.nav-spacer { flex:1; }
+.nav-footer { padding:14px 20px 20px; border-top:1px solid rgba(255,255,255,.06); }
+.nav-ver { font-size:10px; color:rgba(255,255,255,.25); }
+
+/* ── MAIN ────────────────────────────────────────── */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* TOPBAR */
+.topbar {
+  height:60px; background:var(--white); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; flex-shrink:0; box-shadow:var(--shadow);
+}
+.topbar-left { display:flex; align-items:center; gap:16px; }
+.page-title-bar { font-size:18px; font-weight:800; color:var(--text-dark); }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.topbar-badge { background:var(--orange-light); color:var(--orange); font-size:11px;
+                font-weight:700; padding:4px 12px; border-radius:20px; }
+
+/* CONTENT */
+#content { flex:1; overflow-y:auto; padding:24px 28px; }
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ── KPI CARDS ───────────────────────────────────── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.kpi-card {
+  background:var(--white); border-radius:12px; padding:20px;
+  box-shadow:var(--shadow); border:1px solid var(--border);
+  display:flex; align-items:center; gap:16px;
+}
+.kpi-icon {
+  width:48px; height:48px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;
+}
+.kpi-icon.orange  { background:var(--orange-light); }
+.kpi-icon.green   { background:var(--success-bg); }
+.kpi-icon.red     { background:var(--danger-bg); }
+.kpi-icon.blue    { background:var(--info-bg); }
+.kpi-icon.yellow  { background:var(--alert-bg); }
+.kpi-text .kpi-label { font-size:11px; color:var(--text-mid); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.kpi-text .kpi-val   { font-size:20px; font-weight:800; color:var(--text-dark); }
+.kpi-text .kpi-sub   { font-size:11px; color:var(--text-light); margin-top:2px; }
+
+/* ── WHITE CARD ──────────────────────────────────── */
+.card { background:var(--white); border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:20px; }
+.card-hdr { padding:16px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-size:13px; font-weight:800; color:var(--text-dark); text-transform:uppercase; letter-spacing:.5px; }
+.card-body { padding:16px 20px 20px; }
+
+/* ── TABLE ───────────────────────────────────────── */
+.tbl-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th {
+  background:#F8F9FC; color:var(--text-mid); font-size:11px; font-weight:700;
+  padding:10px 14px; text-align:left; white-space:nowrap;
+  border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px;
+}
+tbody tr { border-bottom:1px solid var(--border); transition:.1s; }
+tbody tr:hover { background:#FAFBFF; cursor:pointer; }
+tbody tr.selected { background:#FFF4EF !important; }
+tbody tr:last-child { border-bottom:none; }
+tbody td { padding:11px 14px; color:var(--text-dark); white-space:nowrap; font-size:12px; }
+
+/* ── BADGES ──────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.badge-normal  { background:var(--success-bg); color:var(--success); }
+.badge-alerta  { background:var(--alert-bg);   color:var(--alert); }
+.badge-urgente { background:var(--danger-bg);  color:var(--danger); }
+.badge-cred    { background:var(--success-bg); color:var(--success); }
+.badge-deb     { background:var(--danger-bg);  color:var(--danger); }
+.badge-trans   { background:var(--alert-bg);   color:var(--alert); }
+.badge-sim     { background:var(--success-bg); color:var(--success); }
+.badge-nao     { background:var(--danger-bg);  color:var(--danger); }
+.badge-nd      { background:#F3F4F6; color:var(--text-mid); }
+
+/* ── VALUES ──────────────────────────────────────── */
+.val-pos { color:var(--success); font-weight:700; }
+.val-neg { color:var(--danger);  font-weight:700; }
+.val-zer { color:var(--text-light); }
+
+/* ── FILTERS ─────────────────────────────────────── */
+.filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; padding:16px 20px; border-bottom:1px solid var(--border); }
+.fg { display:flex; flex-direction:column; gap:4px; }
+.fg label { font-size:11px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:.4px; }
+.fi, .fs {
+  border:1.5px solid var(--border); border-radius:7px; padding:7px 11px;
+  font-size:12px; font-family:inherit; background:var(--white); color:var(--text-dark);
+  transition:.15s; min-width:140px;
+}
+.fi:focus, .fs:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px rgba(232,87,26,.1); }
+
+/* ── TOOLBAR ─────────────────────────────────────── */
+.toolbar { display:flex; gap:8px; padding:14px 20px; border-bottom:1px solid var(--border); flex-wrap:wrap; align-items:center; }
+.search-input { border:1.5px solid var(--border); border-radius:7px; padding:7px 12px 7px 34px; font-size:12px; font-family:inherit; background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center; width:200px; }
+.search-input:focus { outline:none; border-color:var(--orange); }
+
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn { border:none; border-radius:7px; padding:8px 16px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; display:inline-flex; align-items:center; gap:6px; }
+.btn-primary  { background:var(--orange); color:#fff; }
+.btn-primary:hover  { background:var(--orange-h); }
+.btn-secondary{ background:var(--text-dark); color:#fff; }
+.btn-secondary:hover{ background:#111; }
+.btn-ghost    { background:var(--bg); color:var(--text-mid); border:1px solid var(--border); }
+.btn-ghost:hover    { background:var(--border); }
+.btn-danger   { background:var(--danger); color:#fff; }
+.btn-danger:hover   { background:#DC2626; }
+.ml-auto { margin-left:auto; }
+
+/* ── MODAL ───────────────────────────────────────── */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+.overlay.open { display:flex; }
+.modal { background:var(--white); border-radius:14px; width:680px; max-width:96vw; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+.modal-hdr { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-hdr h3 { font-size:15px; font-weight:800; color:var(--text-dark); }
+.modal-hdr .badge-orange { background:var(--orange-light); color:var(--orange); font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+.modal-close { background:none; border:none; color:var(--text-light); font-size:20px; cursor:pointer; width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:var(--bg); color:var(--text-dark); }
+.modal-body { padding:22px 24px; overflow-y:auto; flex:1; }
+.modal-ftr { padding:14px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+/* FORM GRID */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-full { grid-column:1/-1; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group label { font-size:11px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:.4px; }
+.form-input, .form-select {
+  border:1.5px solid var(--border); border-radius:7px; padding:9px 12px;
+  font-size:13px; font-family:inherit; background:var(--white); color:var(--text-dark); width:100%;
+}
+.form-input:focus, .form-select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px rgba(232,87,26,.1); }
+.form-section { grid-column:1/-1; font-size:11px; font-weight:800; color:var(--text-mid); text-transform:uppercase; letter-spacing:.8px; padding:8px 0 4px; border-bottom:1px solid var(--border); margin-top:6px; }
+.etapas-grid { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.check-item { display:flex; align-items:center; gap:9px; font-size:13px; color:var(--text-dark); font-weight:500; padding:8px 12px; border:1.5px solid var(--border); border-radius:7px; cursor:pointer; transition:.15s; }
+.check-item:hover { border-color:var(--orange); background:var(--orange-light); }
+.check-item input { width:15px; height:15px; accent-color:var(--orange); cursor:pointer; }
+textarea.form-input { min-height:70px; resize:vertical; }
+
+/* ── NOTIFY ──────────────────────────────────────── */
+.notif-wrap { position:fixed; top:20px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; }
+.notif { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:12px; font-weight:600; min-width:260px; box-shadow:var(--shadow-md); display:flex; align-items:center; gap:10px; animation:nfIn .25s ease; }
+.notif.success { border-left:4px solid var(--success); }
+.notif.error   { border-left:4px solid var(--danger); }
+.notif.info    { border-left:4px solid var(--orange); }
+@keyframes nfIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+/* ── LOADING ─────────────────────────────────────── */
+.loading { display:flex; align-items:center; justify-content:center; padding:48px; color:var(--text-light); font-size:13px; gap:10px; }
+.spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── SALDO SUMMARY ───────────────────────────────── */
+.saldo-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.sbar { border-radius:10px; padding:14px 18px; border:1px solid transparent; }
+.sbar.cred   { background:var(--success-bg); border-color:#A7F3D0; }
+.sbar.deb    { background:var(--danger-bg);  border-color:#FCA5A5; }
+.sbar.saldo  { background:var(--info-bg);    border-color:#93C5FD; }
+.sbar.count  { background:var(--orange-light); border-color:#FDBA74; }
+.sbar-label  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; margin-bottom:5px; }
+.sbar.cred  .sbar-label { color:var(--success); }
+.sbar.deb   .sbar-label { color:var(--danger); }
+.sbar.saldo .sbar-label { color:var(--info); }
+.sbar.count .sbar-label { color:var(--orange); }
+.sbar-val { font-size:16px; font-weight:800; }
+.sbar.cred  .sbar-val { color:var(--success); }
+.sbar.deb   .sbar-val { color:var(--danger); }
+.sbar.saldo .sbar-val { color:var(--info); }
+.sbar.count .sbar-val { color:var(--orange); }
+
+/* ── CONFIG ──────────────────────────────────────── */
+.config-card { background:var(--white); border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--border); padding:24px; max-width:640px; margin-bottom:20px; }
+.config-title { font-size:13px; font-weight:800; color:var(--text-dark); text-transform:uppercase; letter-spacing:.5px; margin-bottom:16px; }
+.config-info-box { background:var(--orange-light); border:1px solid #FDBA74; border-radius:8px; padding:14px 16px; margin-bottom:18px; font-size:13px; color:var(--text-dark); line-height:1.7; }
+.config-steps { font-size:13px; color:var(--text-mid); line-height:1.9; }
+.config-steps strong { color:var(--text-dark); }
+code { background:#F3F4F6; padding:2px 6px; border-radius:4px; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="notif-wrap" id="notifWrap"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-img">
+      <div class="logo-icon">V</div>
+      <span class="logo-name">VISION</span>
+    </div>
+    <div class="logo-sub">Módulo Conta Gráfica</div>
+  </div>
+
+  <div class="nav-section">Principal</div>
+  <button class="nav-btn active" onclick="nav('dashboard',this)">
+    <span class="nav-icon">📊</span> Dashboard
+  </button>
+  <button class="nav-btn" onclick="nav('consulta',this)">
+    <span class="nav-icon">💰</span> Consulta de Saldo
+  </button>
+  <button class="nav-btn" onclick="nav('lancamentos',this)">
+    <span class="nav-icon">📋</span> Lançamentos
+  </button>
+  <button class="nav-btn" onclick="nav('empresas',this)">
+    <span class="nav-icon">🏢</span> Empresas
+  </button>
+
+  <div class="nav-section">Sistema</div>
+  <button class="nav-btn" onclick="nav('config',this)">
+    <span class="nav-icon">⚙️</span> Configurações
+  </button>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="nav-ver">Vision v1.0.0 · SQL Server</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="page-title-bar" id="topbar-title">Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-badge" id="topbar-status">● Conectado</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-grid" id="dash-kpis">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">Posição por Empresa</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Empresa</th><th>Parceiro</th>
+              <th>Créditos</th><th>Déb. Liquidações</th>
+              <th>Déb. Transferências</th><th>Saldo</th><th>Situação</th>
+            </tr></thead>
+            <tbody id="dash-tbody"><tr><td colspan="7" class="loading"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSULTA -->
+    <div class="page" id="page-consulta">
+      <div class="card">
+        <div class="filter-row">
+          <div class="fg">
+            <label>Empresa</label>
+            <select class="fs" id="c-empresa" style="min-width:220px"><option value="">Todas</option></select>
+          </div>
+          <div class="fg">
+            <label>Parceiro</label>
+            <select class="fs" id="c-parceiro">
+              <option value="">Todos</option>
+              <option>Pitágora</option>
+              <option>Pedro</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Situação</label>
+            <select class="fs" id="c-situacao">
+              <option value="">Todas</option>
+              <option value="normal">Normal</option>
+              <option value="alerta">Alerta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" onclick="clearConsulta()">Limpar</button>
+          <button class="btn btn-primary" onclick="loadConsulta()">🔍 Consultar</button>
+        </div>
+        <div class="card-body">
+          <div class="saldo-bar">
+            <div class="sbar cred"><div class="sbar-label">Total Créditos</div><div class="sbar-val" id="cs-cred">—</div></div>
+            <div class="sbar deb"> <div class="sbar-label">Total Débitos</div><div class="sbar-val" id="cs-deb">—</div></div>
+            <div class="sbar saldo"><div class="sbar-label">Saldo Total</div><div class="sbar-val" id="cs-saldo">—</div></div>
+            <div class="sbar count"><div class="sbar-label">Empresas</div><div class="sbar-val" id="cs-count">—</div></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Empresa</th><th>Parceiro</th><th>Certificado</th>
+                <th>Créditos Disp.</th><th>Déb. Liquidações</th>
+                <th>Déb. Transferências</th><th>Saldo</th><th>Situação</th>
+              </tr></thead>
+              <tbody id="consulta-tbody"><tr><td colspan="8" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LANÇAMENTOS -->
+    <div class="page" id="page-lancamentos">
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openLancForm(null)">＋ Novo</button>
+          <button class="btn btn-secondary" onclick="editLanc()">✏ Editar</button>
+          <button class="btn btn-danger" onclick="deleteLanc()">🗑 Excluir</button>
+          <button class="btn btn-ghost" onclick="loadLancamentos()">↻</button>
+          <select class="fs ml-auto" id="lf-filter-emp" onchange="loadLancamentos()" style="min-width:200px">
+            <option value="">Todas as empresas</option>
+          </select>
+          <input class="search-input" id="lanc-q" placeholder="Buscar..." oninput="filterLancamentos()">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Empresa</th><th>Tipo</th><th>Data NF</th>
+              <th>DUIMP/DI</th><th>Parceiro</th><th>Data Exon.</th>
+              <th>%</th><th>Valor</th><th>Valor Ajustado</th>
+            </tr></thead>
+            <tbody id="lanc-tbody"></tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;font-size:11px;color:var(--text-light)" id="lanc-count"></div>
+      </div>
+    </div>
+
+    <!-- EMPRESAS -->
+    <div class="page" id="page-empresas">
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openEmpForm(null)">＋ Nova Empresa</button>
+          <button class="btn btn-secondary" onclick="editEmp()">✏ Editar</button>
+          <button class="btn btn-danger" onclick="deleteEmp()">🗑 Excluir</button>
+          <button class="btn btn-ghost" onclick="loadEmpresas()">↻</button>
+          <input class="search-input ml-auto" id="emp-q" placeholder="Buscar..." oninput="filterEmpresas()">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Empresa</th><th>Escritório</th><th>Parceiro</th>
+              <th>Loc.</th><th>Filial</th><th>Reat.</th><th>CG</th>
+              <th>Certificado</th><th>Saldo</th><th>Situação</th>
+            </tr></thead>
+            <tbody id="emp-tbody"></tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;font-size:11px;color:var(--text-light)" id="emp-count"></div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="page" id="page-config">
+      <div class="config-card">
+        <div class="config-title">🔌 Conexão SQL Server</div>
+        <div class="config-info-box">
+          <strong>Configuração atual:</strong> Edite o arquivo <code>.env</code> na pasta do servidor para alterar as configurações de conexão.
+          O sistema reconecta automaticamente ao reiniciar.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px" id="cfg-status"></div>
+        <button class="btn btn-primary" onclick="testConnection()">🔍 Testar Conexão</button>
+      </div>
+
+      <div class="config-card">
+        <div class="config-title">ℹ️ Acesso em Rede</div>
+        <div class="config-steps">
+          <p><strong>URL de acesso local:</strong> <code>http://localhost:3000</code></p>
+          <p><strong>URL de acesso na rede:</strong> <code>http://IP_DO_SERVIDOR:3000</code></p>
+          <p>Para descobrir o IP do servidor, abra o CMD e digite: <code>ipconfig</code></p>
+          <p>Todos os usuários na mesma rede podem acessar pelo navegador sem instalar nada.</p>
+          <p><strong>Backup:</strong> Os dados ficam no SQL Server — use os recursos de backup do próprio SQL Server.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL LANÇAMENTO -->
+<div class="overlay" id="modal-lanc">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="lanc-modal-title">Novo Lançamento</h3>
+      <button class="modal-close" onclick="closeModal('modal-lanc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Empresa *</label>
+          <select class="form-select" id="lf-empresa"></select>
+        </div>
+        <div class="form-group form-full">
+          <label>Tipo de Movimento *</label>
+          <select class="form-select" id="lf-tipo">
+            <option>Créditos Reconhecidos e Cedidos</option>
+            <option>Débitos de Liquidações</option>
+            <option>Débitos de Transferências</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data NF *</label>
+          <input class="form-input" type="date" id="lf-datanf">
+        </div>
+        <div class="form-group">
+          <label>DUIMP / DI ou Processo</label>
+          <input class="form-input" id="lf-duimp" placeholder="Ex: 1500005664">
+        </div>
+        <div class="form-group">
+          <label>Parceiro</label>
+          <select class="form-select" id="lf-parceiro">
+            <option>Pitágora</option><option>Pedro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data Exoneração</label>
+          <input class="form-input" type="date" id="lf-dataexo">
+        </div>
+        <div class="form-group">
+          <label>Percentual (%)</label>
+          <input class="form-input" type="number" step="0.01" id="lf-perc" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label>Valor (R$) *</label>
+          <input class="form-input" type="number" step="0.01" id="lf-valor">
+        </div>
+        <div class="form-group form-full">
+          <label>Valor Ajustado (R$) *</label>
+          <input class="form-input" type="number" step="0.01" id="lf-valoradj">
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" onclick="closeModal('modal-lanc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLanc()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMPRESA -->
+<div class="overlay" id="modal-emp">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="emp-modal-title">Nova Empresa</h3>
+      <button class="modal-close" onclick="closeModal('modal-emp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Nome da Empresa *</label>
+          <input class="form-input" id="ef-nome" placeholder="Razão social completa">
+        </div>
+        <div class="form-group">
+          <label>Escritório</label>
+          <select class="form-select" id="ef-escritorio">
+            <option>Pitágora</option><option>Pedro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Parceiro</label>
+          <select class="form-select" id="ef-parceiro">
+            <option>Pitágora</option><option>Pedro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cliente Certificado</label>
+          <select class="form-select" id="ef-cert">
+            <option value="">—</option>
+            <option>Sim</option><option>Não</option>
+          </select>
+        </div>
+        <div class="form-section">Estágios do Processo</div>
+        <div class="etapas-grid">
+          <label class="check-item"><input type="checkbox" id="ef-loc"> Locação de Sala</label>
+          <label class="check-item"><input type="checkbox" id="ef-fil"> Abertura de Filial</label>
+          <label class="check-item"><input type="checkbox" id="ef-reat"> Reativação de IE</label>
+          <label class="check-item"><input type="checkbox" id="ef-cg"> Conta Gráfica</label>
+        </div>
+        <div class="form-group form-full" style="margin-top:8px">
+          <label>Observações</label>
+          <textarea class="form-input" id="ef-obs" placeholder="Anotações adicionais..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" onclick="closeModal('modal-emp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEmp()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+const R = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const fmtD = d => { if(!d) return '—'; try { return new Date(d).toLocaleDateString('pt-BR'); } catch{ return d; } };
+const sitBadge = s => s==='urgente'?'<span class="badge badge-urgente">🔴 Urgente</span>':s==='alerta'?'<span class="badge badge-alerta">🟡 Alerta</span>':'<span class="badge badge-normal">🟢 Normal</span>';
+const certBadge = c => c==='Sim'?'<span class="badge badge-sim">Sim</span>':c==='Não'?'<span class="badge badge-nao">Não</span>':'<span class="badge badge-nd">—</span>';
+const etapa = v => v?'<span style="color:var(--success);font-size:14px">✅</span>':'<span style="color:var(--text-light);font-size:14px">⭕</span>';
+
+let selLancId = null, selEmpId = null;
+let allLancs = [], allEmps = [], allEmpsSaldo = [];
+let editLancId = null, editEmpId = null;
+
+// ── FETCH WRAPPER ────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error || 'Erro na requisição');
+  return data;
+}
+
+// ── NAVIGATION ───────────────────────────────────
+const titles = {dashboard:'Dashboard',consulta:'Consulta de Saldo',lancamentos:'Lançamentos',empresas:'Empresas',config:'Configurações'};
+function nav(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('topbar-title').textContent = titles[page];
+  selLancId = null; selEmpId = null;
+  if(page==='dashboard')   loadDashboard();
+  if(page==='consulta')    { populateEmpFilter('c-empresa'); loadConsulta(); }
+  if(page==='lancamentos') { populateEmpFilter('lf-filter-emp'); loadLancamentos(); }
+  if(page==='empresas')    loadEmpresas();
+  if(page==='config')      loadConfig();
+}
+
+// ── DASHBOARD ────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const data = await api('GET','/dashboard');
+    let tCred=0,tDebLiq=0,tDebTrans=0,urgentes=0,alertas=0;
+    data.forEach(r => {
+      tCred    += +r.creditos;
+      tDebLiq  += +r.debitos_liq;
+      tDebTrans+= +r.debitos_trans;
+      const s = +r.creditos - +r.debitos_liq - +r.debitos_trans;
+      if(s<0) urgentes++; else if(s<50000) alertas++;
+    });
+    const tSaldo = tCred - tDebLiq - tDebTrans;
+
+    document.getElementById('dash-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-icon orange">🏢</div><div class="kpi-text"><div class="kpi-label">Empresas</div><div class="kpi-val">${data.length}</div></div></div>
+      <div class="kpi-card"><div class="kpi-icon green">💳</div><div class="kpi-text"><div class="kpi-label">Créditos Totais</div><div class="kpi-val" style="font-size:15px">${R(tCred)}</div></div></div>
+      <div class="kpi-card"><div class="kpi-icon ${tSaldo<0?'red':'blue'}">💰</div><div class="kpi-text"><div class="kpi-label">Saldo Consolidado</div><div class="kpi-val" style="font-size:15px;color:${tSaldo<0?'var(--danger)':'var(--info)'}">${R(tSaldo)}</div></div></div>
+      <div class="kpi-card"><div class="kpi-icon ${urgentes>0?'red':'yellow'}">⚠️</div><div class="kpi-text"><div class="kpi-label">Situação Crítica</div><div class="kpi-val" style="color:${urgentes>0?'var(--danger)':'var(--alert)'}">${urgentes} urgente(s)</div><div class="kpi-sub">${alertas} em alerta</div></div></div>
+    `;
+
+    document.getElementById('dash-tbody').innerHTML = data.map(r => {
+      const s = +r.creditos - +r.debitos_liq - +r.debitos_trans;
+      const sit = s<0?'urgente':s<50000?'alerta':'normal';
+      return `<tr>
+        <td title="${r.nome}" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">${r.nome}</td>
+        <td>${r.parceiro||'—'}</td>
+        <td class="val-pos">${R(r.creditos)}</td>
+        <td class="${+r.debitos_liq>0?'val-neg':'val-zer'}">${+r.debitos_liq>0?R(r.debitos_liq):'—'}</td>
+        <td class="${+r.debitos_trans>0?'val-neg':'val-zer'}">${+r.debitos_trans>0?R(r.debitos_trans):'—'}</td>
+        <td style="font-weight:800;color:${s<0?'var(--danger)':s<50000?'var(--alert)':'var(--success)'}">${R(s)}</td>
+        <td>${sitBadge(sit)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { notify(e.message,'error'); }
+}
+
+// ── CONSULTA ─────────────────────────────────────
+async function loadConsulta() {
+  try {
+    const params = new URLSearchParams();
+    const emp = document.getElementById('c-empresa').value;
+    const par = document.getElementById('c-parceiro').value;
+    const sit = document.getElementById('c-situacao').value;
+    if(emp) params.set('empresa', emp);
+    if(par) params.set('parceiro', par);
+    if(sit) params.set('situacao', sit);
+
+    const data = await api('GET', '/saldo?' + params);
+    allEmpsSaldo = data;
+
+    let tCred=0, tDeb=0;
+    data.forEach(r=>{ tCred += +r.creditos; tDeb += +r.debitos_liq + +r.debitos_trans; });
+    document.getElementById('cs-cred').textContent  = R(tCred);
+    document.getElementById('cs-deb').textContent   = R(tDeb);
+    document.getElementById('cs-saldo').textContent = R(tCred-tDeb);
+    document.getElementById('cs-count').textContent = data.length + ' empresa(s)';
+
+    document.getElementById('consulta-tbody').innerHTML = data.map(r => `<tr>
+      <td title="${r.nome}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${r.nome}</td>
+      <td>${r.parceiro||'—'}</td>
+      <td>${certBadge(r.certificado)}</td>
+      <td class="val-pos">${R(r.creditos)}</td>
+      <td class="${+r.debitos_liq>0?'val-neg':'val-zer'}">${+r.debitos_liq>0?R(r.debitos_liq):'—'}</td>
+      <td class="${+r.debitos_trans>0?'val-neg':'val-zer'}">${+r.debitos_trans>0?R(r.debitos_trans):'—'}</td>
+      <td style="font-weight:800;color:${+r.saldo<0?'var(--danger)':+r.saldo<50000?'var(--alert)':'var(--success)'}">${R(r.saldo)}</td>
+      <td>${sitBadge(r.situacao)}</td>
+    </tr>`).join('');
+  } catch(e) { notify(e.message,'error'); }
+}
+
+function clearConsulta() {
+  document.getElementById('c-empresa').value='';
+  document.getElementById('c-parceiro').value='';
+  document.getElementById('c-situacao').value='';
+  loadConsulta();
+}
+
+// ── LANÇAMENTOS ───────────────────────────────────
+async function loadLancamentos() {
+  try {
+    const emp = document.getElementById('lf-filter-emp').value;
+    const params = emp ? '?empresa='+encodeURIComponent(emp) : '';
+    allLancs = await api('GET', '/lancamentos'+params);
+    renderLancamentos();
+  } catch(e) { notify(e.message,'error'); }
+}
+
+function filterLancamentos() { renderLancamentos(); }
+
+function renderLancamentos() {
+  const q = (document.getElementById('lanc-q').value||'').toLowerCase();
+  const list = q ? allLancs.filter(l =>
+    l.empresa.toLowerCase().includes(q) ||
+    (l.tipo_movimento||'').toLowerCase().includes(q) ||
+    (l.duimp_processo||'').toLowerCase().includes(q)
+  ) : allLancs;
+
+  const tipoCls = t => t==='Créditos Reconhecidos e Cedidos'?'badge-cred':t==='Débitos de Liquidações'?'badge-deb':'badge-trans';
+  document.getElementById('lanc-tbody').innerHTML = list.map(l => `
+    <tr onclick="selLanc(${l.id},this)" class="${selLancId===l.id?'selected':''}">
+      <td>${l.id}</td>
+      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis" title="${l.empresa}">${l.empresa}</td>
+      <td><span class="badge ${tipoCls(l.tipo_movimento)}" style="font-size:10px">${l.tipo_movimento}</span></td>
+      <td>${fmtD(l.data_nf)}</td>
+      <td>${l.duimp_processo||'—'}</td>
+      <td>${l.parceiro||'—'}</td>
+      <td>${fmtD(l.data_exoneracao)}</td>
+      <td>${l.percentual!=null?l.percentual+'%':'—'}</td>
+      <td class="${l.tipo_movimento==='Créditos Reconhecidos e Cedidos'?'val-pos':'val-neg'}">${R(l.valor)}</td>
+      <td class="${l.tipo_movimento==='Créditos Reconhecidos e Cedidos'?'val-pos':'val-neg'}">${R(l.valor_ajustado)}</td>
+    </tr>`).join('');
+  document.getElementById('lanc-count').textContent = list.length+' lançamento(s)';
+}
+
+function selLanc(id,tr) {
+  document.querySelectorAll('#lanc-tbody tr').forEach(r=>r.classList.remove('selected'));
+  selLancId=id; tr.classList.add('selected');
+}
+function editLanc() {
+  if(!selLancId){notify('Selecione um lançamento.','info');return;}
+  openLancForm(allLancs.find(l=>l.id===selLancId));
+}
+async function deleteLanc() {
+  if(!selLancId){notify('Selecione um lançamento.','info');return;}
+  if(!confirm('Confirma exclusão?')) return;
+  try {
+    await api('DELETE','/lancamentos/'+selLancId);
+    selLancId=null; notify('Excluído!','success'); loadLancamentos();
+  } catch(e){ notify(e.message,'error'); }
+}
+
+function openLancForm(l) {
+  editLancId = l?.id || null;
+  document.getElementById('lanc-modal-title').textContent = l ? 'Editar Lançamento' : 'Novo Lançamento';
+  populateEmpSelect('lf-empresa');
+  document.getElementById('lf-empresa').value  = l?.empresa||'';
+  document.getElementById('lf-tipo').value     = l?.tipo_movimento||'Créditos Reconhecidos e Cedidos';
+  document.getElementById('lf-datanf').value   = l?.data_nf ? l.data_nf.split('T')[0] : '';
+  document.getElementById('lf-duimp').value    = l?.duimp_processo||'';
+  document.getElementById('lf-parceiro').value = l?.parceiro||'Pitágora';
+  document.getElementById('lf-dataexo').value  = l?.data_exoneracao ? l.data_exoneracao.split('T')[0] : '';
+  document.getElementById('lf-perc').value     = l?.percentual??'';
+  document.getElementById('lf-valor').value    = l?.valor??'';
+  document.getElementById('lf-valoradj').value = l?.valor_ajustado??'';
+  document.getElementById('modal-lanc').classList.add('open');
+}
+document.getElementById('lf-valor').addEventListener('input',function(){
+  if(!document.getElementById('lf-valoradj').value) document.getElementById('lf-valoradj').value=this.value;
+});
+async function saveLanc() {
+  const body = {
+    empresa: document.getElementById('lf-empresa').value,
+    tipo_movimento: document.getElementById('lf-tipo').value,
+    data_nf: document.getElementById('lf-datanf').value,
+    duimp_processo: document.getElementById('lf-duimp').value||null,
+    parceiro: document.getElementById('lf-parceiro').value,
+    data_exoneracao: document.getElementById('lf-dataexo').value||null,
+    percentual: document.getElementById('lf-perc').value ? +document.getElementById('lf-perc').value : null,
+    valor: +document.getElementById('lf-valor').value,
+    valor_ajustado: +document.getElementById('lf-valoradj').value
+  };
+  if(!body.empresa||!body.tipo_movimento||!body.data_nf||!body.valor){notify('Campos obrigatórios faltando.','error');return;}
+  try {
+    if(editLancId) await api('PUT','/lancamentos/'+editLancId, body);
+    else await api('POST','/lancamentos', body);
+    closeModal('modal-lanc'); notify('Salvo!','success'); loadLancamentos();
+  } catch(e){ notify(e.message,'error'); }
+}
+
+// ── EMPRESAS ─────────────────────────────────────
+async function loadEmpresas() {
+  try {
+    const [emps, saldos] = await Promise.all([
+      api('GET','/empresas'),
+      api('GET','/saldo')
+    ]);
+    allEmps = emps;
+    const saldoMap = {};
+    saldos.forEach(s => saldoMap[s.nome] = s);
+    renderEmpresas(emps, saldoMap);
+  } catch(e){ notify(e.message,'error'); }
+}
+
+function filterEmpresas() {
+  const q = (document.getElementById('emp-q').value||'').toLowerCase();
+  const filtered = q ? allEmps.filter(e=>e.nome.toLowerCase().includes(q)||(e.escritorio||'').toLowerCase().includes(q)) : allEmps;
+  api('GET','/saldo').then(saldos => {
+    const sm = {}; saldos.forEach(s=>sm[s.nome]=s);
+    renderEmpresas(filtered, sm);
+  });
+}
+
+function renderEmpresas(emps, saldoMap) {
+  document.getElementById('emp-tbody').innerHTML = emps.map(e => {
+    const s = saldoMap[e.nome] || {saldo:0, situacao:'normal'};
+    return `<tr onclick="selEmp(${e.id},this)" class="${selEmpId===e.id?'selected':''}">
+      <td title="${e.nome}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${e.nome}</td>
+      <td>${e.escritorio||'—'}</td>
+      <td>${e.parceiro||'—'}</td>
+      <td style="text-align:center">${etapa(e.etapa_locacao)}</td>
+      <td style="text-align:center">${etapa(e.etapa_filial)}</td>
+      <td style="text-align:center">${etapa(e.etapa_reativacao)}</td>
+      <td style="text-align:center">${etapa(e.etapa_conta_grafica)}</td>
+      <td style="text-align:center">${certBadge(e.certificado)}</td>
+      <td style="font-weight:700;color:${+s.saldo<0?'var(--danger)':+s.saldo<50000?'var(--alert)':'var(--success)'}">${R(s.saldo)}</td>
+      <td>${sitBadge(s.situacao)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('emp-count').textContent = emps.length+' empresa(s)';
+}
+
+function selEmp(id,tr) {
+  document.querySelectorAll('#emp-tbody tr').forEach(r=>r.classList.remove('selected'));
+  selEmpId=id; tr.classList.add('selected');
+}
+function editEmp() {
+  if(!selEmpId){notify('Selecione uma empresa.','info');return;}
+  openEmpForm(allEmps.find(e=>e.id===selEmpId));
+}
+async function deleteEmp() {
+  if(!selEmpId){notify('Selecione uma empresa.','info');return;}
+  const e = allEmps.find(x=>x.id===selEmpId);
+  if(!confirm(`Excluir "${e.nome}"?`)) return;
+  try {
+    await api('DELETE','/empresas/'+selEmpId);
+    selEmpId=null; notify('Excluída!','success'); loadEmpresas();
+  } catch(e){ notify(e.message,'error'); }
+}
+function openEmpForm(e) {
+  editEmpId = e?.id||null;
+  document.getElementById('emp-modal-title').textContent = e?'Editar Empresa':'Nova Empresa';
+  document.getElementById('ef-nome').value  = e?.nome||'';
+  document.getElementById('ef-escritorio').value = e?.escritorio||'Pitágora';
+  document.getElementById('ef-parceiro').value   = e?.parceiro||'Pitágora';
+  document.getElementById('ef-cert').value       = e?.certificado||'';
+  document.getElementById('ef-loc').checked  = !!e?.etapa_locacao;
+  document.getElementById('ef-fil').checked  = !!e?.etapa_filial;
+  document.getElementById('ef-reat').checked = !!e?.etapa_reativacao;
+  document.getElementById('ef-cg').checked   = !!e?.etapa_conta_grafica;
+  document.getElementById('ef-obs').value    = e?.observacoes||'';
+  document.getElementById('modal-emp').classList.add('open');
+}
+async function saveEmp() {
+  const body = {
+    nome: document.getElementById('ef-nome').value.trim(),
+    escritorio: document.getElementById('ef-escritorio').value,
+    parceiro:   document.getElementById('ef-parceiro').value,
+    certificado:document.getElementById('ef-cert').value,
+    etapa_locacao:       document.getElementById('ef-loc').checked,
+    etapa_filial:        document.getElementById('ef-fil').checked,
+    etapa_reativacao:    document.getElementById('ef-reat').checked,
+    etapa_conta_grafica: document.getElementById('ef-cg').checked,
+    observacoes: document.getElementById('ef-obs').value.trim()
+  };
+  if(!body.nome){notify('Nome é obrigatório.','error');return;}
+  try {
+    if(editEmpId) await api('PUT','/empresas/'+editEmpId, body);
+    else await api('POST','/empresas', body);
+    closeModal('modal-emp'); notify('Salvo!','success'); loadEmpresas();
+    populateEmpFilter('c-empresa'); populateEmpFilter('lf-filter-emp');
+  } catch(e){ notify(e.message,'error'); }
+}
+
+// ── CONFIG ────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const data = await api('GET','/dashboard');
+    document.getElementById('cfg-status').innerHTML = `
+      <div style="background:var(--success-bg);border:1px solid #A7F3D0;border-radius:8px;padding:12px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--success);margin-bottom:4px">STATUS</div>
+        <div style="font-size:13px;font-weight:700;color:var(--success)">✅ Conectado ao SQL Server</div>
+        <div style="font-size:11px;color:var(--text-mid);margin-top:2px">${data.length} empresa(s) no banco</div>
+      </div>
+      <div style="background:var(--info-bg);border:1px solid #93C5FD;border-radius:8px;padding:12px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--info);margin-bottom:4px">BANCO</div>
+        <div style="font-size:13px;font-weight:700;color:var(--info)">VisionContaGrafica</div>
+        <div style="font-size:11px;color:var(--text-mid);margin-top:2px">Tabelas: empresas, lancamentos</div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('cfg-status').innerHTML = `<div style="background:var(--danger-bg);border-radius:8px;padding:12px;color:var(--danger);font-weight:700">❌ Sem conexão: ${e.message}</div>`;
+  }
+}
+
+async function testConnection() {
+  notify('Testando conexão...','info');
+  await loadConfig();
+}
+
+// ── HELPERS ───────────────────────────────────────
+async function populateEmpFilter(id) {
+  try {
+    const emps = await api('GET','/empresas');
+    allEmps = emps;
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    const ph = id==='c-empresa' ? '<option value="">Todas</option>' : '<option value="">Todas as empresas</option>';
+    sel.innerHTML = ph + emps.map(e=>`<option value="${e.nome}">${e.nome}</option>`).join('');
+    if(prev) sel.value = prev;
+  } catch(e){}
+}
+
+function populateEmpSelect(id) {
+  const sel = document.getElementById(id);
+  const prev = sel.value;
+  sel.innerHTML = allEmps.map(e=>`<option value="${e.nome}">${e.nome}</option>`).join('');
+  if(prev) sel.value = prev;
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+function notify(msg, type='info') {
+  const w = document.getElementById('notifWrap');
+  const d = document.createElement('div');
+  const icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  d.className = 'notif ' + type;
+  d.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  w.appendChild(d);
+  setTimeout(()=>d.remove(), 3500);
+}
+
+// ── BOOT ──────────────────────────────────────────
+loadDashboard();
+populateEmpFilter('c-empresa');
+populateEmpFilter('lf-filter-emp');
+</script>
+</body>
+</html>

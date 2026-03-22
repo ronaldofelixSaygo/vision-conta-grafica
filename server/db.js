@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const connStr = process.env.URL_DO_BANCO_DE_DADOS || process.env.DATABASE_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway')
-    ? { rejectUnauthorized: false }
-    : false
+  connectionString: connStr,
+  ssl: connStr ? { rejectUnauthorized: false } : false
 });
 
 async function getPool() {
@@ -23,7 +23,6 @@ async function query(text, params) {
 }
 
 async function initDatabase() {
-  // Criar tabelas se não existirem
   await query(`
     CREATE TABLE IF NOT EXISTS vision_empresas (
       id                   SERIAL PRIMARY KEY,
@@ -57,16 +56,11 @@ async function initDatabase() {
     )
   `);
 
-  // Inserir dados iniciais se vazios
   const countEmp = await query('SELECT COUNT(*) as total FROM vision_empresas');
-  if (parseInt(countEmp.rows[0].total) === 0) {
-    await seedEmpresas();
-  }
+  if (parseInt(countEmp.rows[0].total) === 0) await seedEmpresas();
 
   const countLanc = await query('SELECT COUNT(*) as total FROM vision_lancamentos');
-  if (parseInt(countLanc.rows[0].total) === 0) {
-    await seedLancamentos();
-  }
+  if (parseInt(countLanc.rows[0].total) === 0) await seedLancamentos();
 
   console.log('✅ Banco PostgreSQL pronto');
 }
@@ -105,13 +99,9 @@ async function seedEmpresas() {
     ['ALTECNA PRODUTOS AUTOMOTORES LTDA','Pedro','Pedro','',false,false,false,true],
   ];
   for (const e of empresas) {
-    await query(
-      `INSERT INTO vision_empresas (nome,escritorio,parceiro,certificado,etapa_locacao,etapa_filial,etapa_reativacao,etapa_conta_grafica)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      e
-    );
+    await query(`INSERT INTO vision_empresas (nome,escritorio,parceiro,certificado,etapa_locacao,etapa_filial,etapa_reativacao,etapa_conta_grafica) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, e);
   }
-  console.log(`✅ ${empresas.length} empresas inseridas`);
+  console.log('✅ Empresas inseridas');
 }
 
 async function seedLancamentos() {
@@ -191,13 +181,9 @@ async function seedLancamentos() {
     ['EVERTON ALEXANDRE DE A SILVA','Créditos Reconhecidos e Cedidos','2023-04-01','2300040001','Pitágora',40000,40000],
   ];
   for (const l of L) {
-    await query(
-      `INSERT INTO vision_lancamentos (empresa,tipo_movimento,data_nf,duimp_processo,parceiro,valor,valor_ajustado)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      l
-    );
+    await query(`INSERT INTO vision_lancamentos (empresa,tipo_movimento,data_nf,duimp_processo,parceiro,valor,valor_ajustado) VALUES ($1,$2,$3,$4,$5,$6,$7)`, l);
   }
-  console.log(`✅ ${L.length} lançamentos inseridos`);
+  console.log('✅ Lançamentos inseridos');
 }
 
 module.exports = { getPool, query, initDatabase };

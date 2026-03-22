@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const connStr = process.env.URL_DO_BANCO_DE_DADOS || process.env.DATABASE_URL;
+const connStr = process.env.DATABASE_URL || process.env.URL_DO_BANCO_DE_DADOS;
 
 const pool = new Pool({
   connectionString: connStr,
